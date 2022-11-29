@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.lab.models import Courses
 from apps.rbac.models import Roles, User
 
 
@@ -16,12 +17,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['work_id', 'username', 'phone', 'email', 'password', 'role']
+        fields = ['work_id', 'username', 'phone', 'email', 'password', 'role', 'courses']
         # fields = '__all__'
         # 给password增加额外的约束选项,不进行返回
         extra_kwargs = {
             "password": {
                 'write_only': True
+            },
+            "courses": {
+                'read_only': True
             }
         }
         # 重写create方法,密码加密

@@ -12,12 +12,10 @@ class ImageSerializers(serializers.ModelSerializer):
 class CoursesSerializers(serializers.ModelSerializer):
     image = serializers.PrimaryKeyRelatedField(queryset=Image.objects.all())
 
-    # 有一个问题 学生选课当课程删除后学生和课程的中间表应该变化，应不应该将学生也序列化？怎么序列化？
-
     class Meta:
         model = Courses
 
-        fields = ['id', 'name', 'env', 'number', 'create_by', 'image']
+        fields = ['id', 'name', 'env', 'number', 'create_by', 'image', 'user_set']
         # write_only_fields = ['create_time', 'update_time']
 
     def create(self, validated_data):

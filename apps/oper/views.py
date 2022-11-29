@@ -4,9 +4,9 @@ from django.shortcuts import render
 from rest_framework.response import Response
 
 from rest_framework.views import APIView
-
-from apps.rbac.models import User
-from apps.lab.models import Courses
+from apps.oper.serializers import CourseSelectSerializer
+from apps.rbac.models import User, Courses
+from apps.utils.my_pagination import MyPageNumberPagination
 
 '''
 定义操作完成学生选课
@@ -29,3 +29,39 @@ class SelectCourse(APIView):
         user.save()
         course.save()
         return Response({"status": "True"})
+
+
+# 显示学生可以选择的课程
+class ShowCourse(APIView):
+    pagination_class = MyPageNumberPagination
+
+    def get(self, request):
+        username = request.query_params.get("username")
+        user = User.objects.get(username=username)
+        keyword = self.request.query_params.get("keyword")
+
+        # 2,判断是否有keyword
+        if keyword:
+            queryset = Courses.objects.exclude(user=user, name__contains=keyword).all()
+        else:
+            queryset = Courses.objects.exclude(user=user).all()
+        serializer = CourseSelectSerializer(instance=queryset, many=True)
+        return Response(serializer.data)
+
+
+# 显示学生已经选择的课程
+class SelectedCourse(APIView):
+    pagination_class = MyPageNumberPagination
+
+    def get(self, request):
+        username = request.query_params.get("username")
+        user = User.objects.get(username=username)
+        keyword = self.request.query_params.get("keyword")
+
+        # 2,判断是否有keyword
+        if keyword:
+            queryset = Courses.objects.filter(user=user, name__contains=keyword).all()
+        else:
+            queryset = Courses.objects.filter(user=user).all()
+        serializer = CourseSelectSerializer(instance=queryset, many=True)
+        return Response(serializer.data)
