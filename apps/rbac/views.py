@@ -1,12 +1,14 @@
 from datetime import date, timedelta
 
+from django.db.models import Q
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
 from apps.rbac.models import Roles, User
 from apps.rbac.serializer import RolesSerializer, UserSerializer
-from apps.rbac.utils.my_pagination import MyPageNumberPagination
+from apps.utils.my_pagination import MyPageNumberPagination
 
 
 class RolesAPIView(APIView):
@@ -14,9 +16,6 @@ class RolesAPIView(APIView):
         roles = Roles.objects.all()
         serializer = RolesSerializer(instance=roles, many=True)
         return Response(serializer.data)
-
-    def post(self, request):
-        pass
 
 
 class StuTotalNumber(APIView):
@@ -78,7 +77,7 @@ class UserMonthIncrement(APIView):
 
 
 # 获取用户信息
-class UserView(ListAPIView, CreateAPIView):
+class UserView(ModelViewSet):
     pagination_class = MyPageNumberPagination
     # queryset = User.objects.filter(role__name='stu')
     serializer_class = UserSerializer
@@ -91,6 +90,6 @@ class UserView(ListAPIView, CreateAPIView):
 
         # 2,判断是否有keyword
         if keyword:
-            return User.objects.filter(role__name='stu', username__contains=keyword).all()
+            return User.objects.filter(Q(role__name='stu') | Q(role__name='tea'), username__contains=keyword).all()
         else:
-            return User.objects.filter(role__name='stu').all()
+            return User.objects.filter(Q(role__name='stu') | Q(role__name='tea')).all()

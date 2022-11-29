@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from apps.lab.models import Courses
 
 
 # Create your models here.
@@ -40,6 +41,7 @@ class User(AbstractUser):
     department = models.CharField(max_length=50, blank=True, null=True, verbose_name='专业')
     work_id = models.CharField(max_length=30, blank=True, null=True, verbose_name='学号/教职工号')
     role = models.ForeignKey(Roles, on_delete=models.CASCADE)
+    courses = models.ManyToManyField(Courses)
 
     def __str__(self):
         return self.username
