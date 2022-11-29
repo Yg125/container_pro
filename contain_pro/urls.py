@@ -19,4 +19,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('rbac/', include('apps.rbac.urls')),
     path('lab/', include('apps.lab.urls')),
+    path('oper/', include('apps.oper.urls')),
 ]
