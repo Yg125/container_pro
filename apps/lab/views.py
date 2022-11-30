@@ -1,11 +1,15 @@
 from django.shortcuts import render
 
 # Create your views here.
+
 from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from apps.lab import serializer
 from apps.lab.models import Courses, Image, Containerlist
+from apps.rbac.models import User
 from apps.utils.my_pagination import MyPageNumberPagination
 
 
@@ -36,3 +40,21 @@ class ContainersView(ModelViewSet):
     pagination_class = MyPageNumberPagination
     serializer_class = serializer.ContainerSerializers
     queryset = Containerlist.objects.all()
+
+
+class TotalContainers(APIView):
+    def get(self, request):
+        username = request.query_params['username']
+        user = User.objects.get(username=username)
+        count = 0
+        count += Containerlist.objects.filter(users=user).count()
+        return Response({"count": count})
+
+
+class ShowContainers(APIView):
+    def get(self, request):
+        username = request.query_params['username']
+        user = User.objects.get(username=username)
+        queryset = Containerlist.objects.filter(users=user)
+        container_ser = serializer.ContainerSerializers(instance=queryset, many=True)
+        return Response(container_ser.data)

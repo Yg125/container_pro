@@ -4,9 +4,13 @@ from django.shortcuts import render
 from rest_framework.response import Response
 
 from rest_framework.views import APIView
+
+from apps.lab.models import Containerlist
 from apps.oper.serializers import CourseSelectSerializer
 from apps.rbac.models import User, Courses
 from apps.utils.my_pagination import MyPageNumberPagination
+from apps.oper.utils.PortToUse import findport
+import docker
 
 '''
 定义操作完成学生选课
@@ -65,3 +69,19 @@ class SelectedCourse(APIView):
             queryset = Courses.objects.filter(user=user).all()
         serializer = CourseSelectSerializer(instance=queryset, many=True)
         return Response(serializer.data)
+
+
+# 创建实例，运行容器，并将容器信息入库
+class CreateContainer(APIView):
+    def get(self, request):
+        course_id = request.query_params["course_id"]
+        username = request.query_params.get("username")
+        user = User.objects.get(username=username)
+        course = Courses.objects.get(id=course_id)
+        image = course.image
+        port = findport()
+        client = docker.from_env()
+        container = client.containers.run(image=image.image_id, detach=True, ports={'22/tcp': port})
+        Containerlist.objects.create(container_id=container.id, name=container.name, ip_address='127.0.0.1', port=port,
+                                     image=image, status='Up', courses=course, users=user)
+        return Response({'ip_address': '127.0.0.1:'+str(port)})

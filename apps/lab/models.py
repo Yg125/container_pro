@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from contain_pro.settings import AUTH_USER_MODEL
 
 '''
 Foreign 一对多 放在多端  先创建一再创建多 亦即正向创建 可以用对象创建或者主键创建
@@ -34,7 +35,7 @@ class Courses(models.Model):
     env = models.CharField(max_length=500, blank=True, null=True, verbose_name='实验环境')
     number = models.IntegerField(blank=True, null=True, verbose_name='选课人数')
     create_by = models.CharField(max_length=50, blank=True, null=True, verbose_name='创建人')
-    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -44,7 +45,7 @@ class Courses(models.Model):
 
 
 class Containerlist(models.Model):
-    container_id = models.CharField(max_length=30, blank=True, null=True, verbose_name='容器id')
+    container_id = models.CharField(max_length=100, blank=True, null=True, verbose_name='容器id')
     name = models.CharField(max_length=30, blank=True, null=True, verbose_name='容器名')
     run_time = models.DateTimeField(blank=True, null=True, verbose_name='开始运行时间')
     ip_address = models.CharField(max_length=20, blank=True, null=True, verbose_name='IP地址')
@@ -52,6 +53,7 @@ class Containerlist(models.Model):
     status = models.CharField(max_length=30, blank=True, null=True, verbose_name="状态")
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     courses = models.ForeignKey(Courses, on_delete=models.CASCADE)
+    users = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.container_id

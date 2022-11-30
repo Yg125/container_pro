@@ -7,4 +7,4 @@ from apps.lab.models import Courses
 class CourseSelectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Courses
-        fields = ['name', 'env']
+        fields = ['id', 'name', 'env']
