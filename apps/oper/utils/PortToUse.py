@@ -4,21 +4,20 @@
 # import _thread
 import random
 import socket
-import time
-
-socket.setdefaulttimeout(3)  # 设置默认超时时间
 
 
 def testport(port):
-    # url = input('Input the ip you want to scan: ')
     url = '127.0.0.1'
-    # lock = _thread.allocate_lock()
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = s.connect_ex((url, port))
-    if result == 0:
-        return False
-    else:
+    try:
+        s.connect((url, int(port)))
+        s.shutdown(2)
+        # 利用shutdown()函数使socket双向数据传输变为单向数据传输。shutdown()需要一个单独的参数，
+        # 该参数表示了如何关闭socket。具体为：0表示禁止将来读；1表示禁止将来写；2表示禁止将来读和写。
         return True
+    except:
+        return False
 
 
 def findport():
