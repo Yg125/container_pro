@@ -35,7 +35,7 @@ class Courses(models.Model):
     env = models.CharField(max_length=500, blank=True, null=True, verbose_name='实验环境')
     number = models.IntegerField(blank=True, null=True, verbose_name='选课人数')
     create_by = models.CharField(max_length=50, blank=True, null=True, verbose_name='创建人')
-    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True, blank=True)
+    image = models.ForeignKey(Image, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -52,7 +52,7 @@ class Containerlist(models.Model):
     port = models.BigIntegerField(blank=True, null=True, verbose_name='端口号')
     status = models.CharField(max_length=30, blank=True, null=True, verbose_name="状态")
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
-    courses = models.ForeignKey(Courses, on_delete=models.CASCADE)
+    courses = models.ForeignKey(Courses, on_delete=models.SET_NULL, null=True)
     users = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
 
     def __str__(self):

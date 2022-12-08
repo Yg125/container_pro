@@ -1,3 +1,6 @@
+import os
+from collections import OrderedDict
+
 from django.shortcuts import render
 
 # Create your views here.
@@ -21,7 +24,7 @@ import docker
 
 class SelectCourse(APIView):
     def get(self, request):
-        username = request.query_params['username']
+        username = request.user.username
         course_name = request.query_params['course_name']
         try:
             user = User.objects.get(username=username)
@@ -35,12 +38,12 @@ class SelectCourse(APIView):
         return Response({"status": "True"})
 
 
-# 显示学生可以选择的课程
+# 显示学生/老师可以选择的课程
 class ShowCourse(APIView):
     pagination_class = MyPageNumberPagination
 
     def get(self, request):
-        username = request.query_params.get("username")
+        username = request.user.username
         user = User.objects.get(username=username)
         keyword = self.request.query_params.get("keyword")
 
@@ -50,15 +53,15 @@ class ShowCourse(APIView):
         else:
             queryset = Courses.objects.exclude(user=user).all()
         serializer = CourseSelectSerializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        return Response(OrderedDict([('lists', serializer.data)]))
 
 
-# 显示学生已经选择的课程
+# 显示学生/老师已经选择的课程
 class SelectedCourse(APIView):
     pagination_class = MyPageNumberPagination
 
     def get(self, request):
-        username = request.query_params.get("username")
+        username = request.user.username
         user = User.objects.get(username=username)
         keyword = self.request.query_params.get("keyword")
 
@@ -68,20 +71,53 @@ class SelectedCourse(APIView):
         else:
             queryset = Courses.objects.filter(user=user).all()
         serializer = CourseSelectSerializer(instance=queryset, many=True)
-        return Response(serializer.data)
+        return Response(OrderedDict([('lists', serializer.data)]))
 
 
 # 创建实例，运行容器，并将容器信息入库
 class CreateContainer(APIView):
     def get(self, request):
         course_id = request.query_params["course_id"]
-        username = request.query_params.get("username")
+        username = request.user.username
         user = User.objects.get(username=username)
         course = Courses.objects.get(id=course_id)
         image = course.image
         port = findport()
         client = docker.from_env()
-        container = client.containers.run(image=image.image_id, detach=True, ports={'22/tcp': port})
+        instance = client.containers.run(image=image.image_id, detach=True, ports={'22/tcp': port})
+        container = client.containers.get(container_id=instance.id)
+        status = container.status
         Containerlist.objects.create(container_id=container.id, name=container.name, ip_address='127.0.0.1', port=port,
-                                     image=image, status='Up', courses=course, users=user)
-        return Response({'ip_address': '127.0.0.1:'+str(port)})
+                                     image=image, status=status, courses=course, users=user)
+        return Response({'ip_address': '127.0.0.1:' + str(port), 'user': 'root', 'password': '123456'})
+
+
+class StartContainer(APIView):
+    def get(self, request):
+        # 获取容器信息并重启
+        container_id = request.query_params['container_id']
+        client = docker.from_env()
+        container = client.containers.get(container_id=container_id)
+        container.start()
+        container = client.containers.get(container_id=container_id)
+        status = container.status
+        # 容器状态存库
+        instance = Containerlist.objects.get(container_id=container_id)
+        instance.status = status
+        instance.save()
+        return Response({'status': 'true'})
+
+
+class StopContainer(APIView):
+    def get(self, request):
+        container_id = request.query_params['container_id']
+        client = docker.from_env()
+        container = client.containers.get(container_id=container_id)
+        instance = Containerlist.objects.get(container_id=container_id)
+        container.kill()
+        container = client.containers.get(container_id=container_id)
+        status = container.status
+        # 容器状态存库
+        instance.status = status
+        instance.save()
+        return Response({'status': 'true'})
