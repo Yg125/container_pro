@@ -1,12 +1,12 @@
 from collections import OrderedDict
-
+from rest_framework import filters
 import docker
 from django.shortcuts import render
 
 # Create your views here.
 from rest_framework import status
 
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -20,8 +20,10 @@ from apps.utils.my_pagination import MyPageNumberPagination
 class CoursesView(ModelViewSet):
     pagination_class = MyPageNumberPagination
     serializer_class = serializer.CoursesSerializers
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', ]
 
-    # ueryset = Courses.objects.all()
+    # queryset = Courses.objects.all()
 
     def get_queryset(self):
         # 1,获取keyword查询参数
@@ -38,6 +40,8 @@ class ImagesView(ModelViewSet):
     pagination_class = MyPageNumberPagination
     serializer_class = serializer.ImageSerializers
     queryset = Image.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['image_id', 'image_name']
 
     def destroy(self, request, *args, **kwargs):  # 重写删除镜像，还需要删除掉docker系统中的镜像
         instance = self.get_object()
@@ -56,6 +60,8 @@ class ContainersView(ModelViewSet):
     pagination_class = MyPageNumberPagination
     serializer_class = serializer.ContainerSerializers
     queryset = Containerlist.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['container_id', 'name']
 
     def destroy(self, request, *args, **kwargs):  # 重写删除容器，还需要删除掉docker系统中的容器
         instance = self.get_object()
@@ -73,19 +79,35 @@ class TotalContainers(APIView):
     def get(self, request):
         username = request.user.username
         if username == 'admin':
-            count = Containerlist.objects.all().count()
-            return Response({"count": count})
+            number = Containerlist.objects.all().count()
+            return Response({"number": number})
         else:
             user = User.objects.get(username=username)
-            count = 0
-            count += Containerlist.objects.filter(users=user).count()
-            return Response({"count": count})
+            number = 0
+            number += Containerlist.objects.filter(users=user).count()
+            return Response({"number": number})
 
 
-class ShowContainers(APIView):
-    def get(self, request):
+class ShowContainers(ListAPIView):
+    serializer_class = serializer.ContainerSerializers
+    pagination_class = MyPageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['container_id', 'name']
+
+    # def get(self, request):
+    #     username = request.user.username
+    #     user = User.objects.get(username=username)
+    #     queryset = Containerlist.objects.filter(users=user)
+    #     container_ser = serializer.ContainerSerializers(instance=queryset, many=True)
+    #     return Response(OrderedDict([('lists', container_ser.data)]))
+    def list(self, request, *args, **kwargs):
         username = request.user.username
         user = User.objects.get(username=username)
-        queryset = Containerlist.objects.filter(users=user)
-        container_ser = serializer.ContainerSerializers(instance=queryset, many=True)
-        return Response(OrderedDict([('lists', container_ser.data)]))
+        queryset = self.filter_queryset(Containerlist.objects.filter(users=user))
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

@@ -14,12 +14,12 @@ ManytoMany 定义了 ManyToManyField 的模型使用字段名作为属性名，�
 
 
 class Image(models.Model):
-    image_id = models.CharField(max_length=30, blank=True, null=True, verbose_name='镜像id')
+    image_id = models.CharField(max_length=100, blank=True, null=True, verbose_name='镜像id')
     image_name = models.CharField(max_length=50, blank=True, null=True, verbose_name='镜像名称')
     tag = models.CharField(max_length=20, blank=True, null=True, verbose_name='标签')
     create_time = models.DateTimeField(blank=True, null=True, verbose_name='创建时间')
     update_time = models.DateTimeField(blank=True, null=True, verbose_name='更新时间')
-    mem = models.FloatField(blank=True, null=True, verbose_name='大小')
+    mem = models.CharField(max_length=30, blank=True, null=True, verbose_name='大小')
 
     def __str__(self):
         return self.image_name

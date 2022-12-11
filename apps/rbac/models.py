@@ -40,6 +40,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=11, blank=True, null=True, verbose_name='手机号码')
     department = models.CharField(max_length=50, blank=True, null=True, verbose_name='专业')
     work_id = models.CharField(max_length=30, blank=True, null=True, verbose_name='学号/教职工号')
+    mpass = models.CharField(max_length=30, blank=True, null=True, verbose_name='Minio密码')
     role = models.ForeignKey(Roles, on_delete=models.CASCADE)
     courses = models.ManyToManyField(Courses)
 

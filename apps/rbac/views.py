@@ -16,6 +16,7 @@ from apps.lab.models import Courses
 from apps.rbac.models import Roles, User
 from apps.rbac.serializer import RolesSerializer, UserSerializer
 from apps.utils.my_pagination import MyPageNumberPagination
+from rest_framework import filters
 
 
 class UserInfoView(APIView):
@@ -101,6 +102,8 @@ class UserView(ModelViewSet):
     pagination_class = MyPageNumberPagination
     # queryset = User.objects.filter(role__name='stu')
     serializer_class = UserSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['username', 'work_id']
 
     # 重写get_queryset方法,提供数据
     def get_queryset(self):
@@ -120,6 +123,7 @@ class UserView(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
+        serializer.validated_data['mpass'] = password
         try:
             # 1.根据注册信息创建用户，并建立连接 实现需要在服务器执行mc config host add myminio http://127.0.0.1:9000 admin yg125125 --api S3v4
             # myminio 相当于取得别名，之后都是基于这个别名使用
