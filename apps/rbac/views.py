@@ -104,7 +104,8 @@ class UserView(ModelViewSet):
     serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['username', 'work_id']
-
+    authentication_classes = []
+    permission_classes = []
     # 重写get_queryset方法,提供数据
     def get_queryset(self):
 

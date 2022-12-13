@@ -35,6 +35,14 @@ class CoursesView(ModelViewSet):
         else:
             return Courses.objects.all()
 
+    def destroy(self, request, *args, **kwargs):  # 重写删除课程，有用户使用时不能删除
+        instance = self.get_object()
+        if instance.number != 0:
+            return Response({'error': '有用户使用该课程，不能删除'})
+        else:
+            instance.delete()
+            return Response({'error': ''}, status=status.HTTP_204_NO_CONTENT)
+
 
 class ImagesView(ModelViewSet):
     pagination_class = MyPageNumberPagination
