@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
 from apps.lab.models import Courses, Image, Containerlist
+from apps.rbac.serializer import UserSerializer
 
 
 class ImageSerializers(serializers.ModelSerializer):
@@ -56,10 +57,11 @@ class CoursesSerializers(serializers.ModelSerializer):
 class ContainerSerializers(serializers.ModelSerializer):
     courses = CoursesSerializers()
     image = ImageSerializers()
+    users = UserSerializer()
 
     class Meta:
         model = Containerlist
-        fields = ['id', 'container_id', 'name', 'ip_address', 'port', 'status', 'image', 'courses']
+        fields = ['id', 'container_id', 'name', 'ip_address', 'port', 'status', 'image', 'courses', 'users']
 
     extra_kwargs = {
         "image": {

@@ -111,15 +111,33 @@ class SelectedCourse(ListAPIView):
 
 # 创建实例，运行容器，并将容器信息入库
 class CreateContainer(APIView):
-    def get(self, request):
-        course_id = request.query_params["course_id"]
+    # def get(self, request):
+    #     course_id = request.query_params["course_id"]
+    #     username = request.user.username
+    #     user = User.objects.get(username=username)
+    #     course = Courses.objects.get(id=course_id)
+    #     image = course.image
+    #     port = findport()
+    #     client = docker.from_env()
+    #     instance = client.containers.run(image=image.image_id, detach=True, ports={'22/tcp': port})
+    #     container = client.containers.get(container_id=instance.id)
+    #     status = container.status
+    #     Containerlist.objects.create(container_id=container.id, name=container.name, ip_address='127.0.0.1', port=port,
+    #                                  image=image, status=status, courses=course, users=user)
+    #     return Response({'ip_address': '127.0.0.1:' + str(port), 'user': 'root', 'password': '123456'})
+
+    def post(self, request):
+        course_id = request.data["course_id"]
+        cpu = int(request.data["cpu"])
+        mem = request.data["mem"]
         username = request.user.username
         user = User.objects.get(username=username)
         course = Courses.objects.get(id=course_id)
         image = course.image
         port = findport()
         client = docker.from_env()
-        instance = client.containers.run(image=image.image_id, detach=True, ports={'22/tcp': port})
+        instance = client.containers.run(image=image.image_id, detach=True, ports={'22/tcp': port}, cpu_count=cpu,
+                                         mem_limit=mem)
         container = client.containers.get(container_id=instance.id)
         status = container.status
         Containerlist.objects.create(container_id=container.id, name=container.name, ip_address='127.0.0.1', port=port,
@@ -218,6 +236,7 @@ class Files(APIView):
         return Response({'lists': lists})
 
 
+# 原来单机版本
 class Build(APIView):
     # 根据Minio中的文件构建镜像 并将镜像信息存库
     def get(self, request):
@@ -241,4 +260,36 @@ class Build(APIView):
             os.system('rm /Users/yangang/images/image.tar')
         else:
             pass
+        return Response("True")
+
+
+
+class CommitContainer(APIView):
+    def post(self, request):
+        tag = request.data['tag']
+        repository = request.data['repository']
+        container_id = request.data['container_id']
+        # 找出在哪个服务器的哪个容器
+        os.system('docker commit ' + container_id + ' ' + repository + ':' + tag)
+        client = docker.from_env()
+        image = client.images.get(repository + ':' + tag)
+        image_name = image.attrs['RepoTags'][0].split(':', 1)[0]
+        image_tag = image.attrs['RepoTags'][0].split(':', 1)[1]
+        os.system('docker tag ' + image_name + ':' + image_tag + ' 10.250.89.149:5000/' + image_name + ':' + image_tag)
+        os.system('docker push 10.250.89.149:5000/' + image_name + ':' + image_tag)  # 镜像上传到本地仓库
+        query_set = Image.objects.filter(image_id=image.id[7:19])
+        if not query_set:
+            Image.objects.create(image_id=image.id[7:19], image_name=image_name,
+                                 tag=image_tag,
+                                 mem='%.1f' % (image.attrs['Size'] / (2 ** 20)) + 'MiB')
+        return Response("True")
+
+
+class UpdateContainer(APIView):
+    def post(self, request):
+        container_id = request.data['container_id']
+        cpu = request.data['cpu']
+        mem = request.data['mem']
+        os.system(
+            'docker container update ' + container_id + ' --cpus=' + cpu + ' --memory=' + mem + " --memory-swap='-1'")
         return Response("True")

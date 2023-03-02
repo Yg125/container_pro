@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
-from apps.lab.models import Courses
 from apps.rbac.models import Roles, User
-
 
 # 角色序列化器
 class RolesSerializer(serializers.ModelSerializer):

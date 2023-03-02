@@ -1,5 +1,6 @@
 from django.urls import path, re_path
 from . import views
+
 urlpatterns = [
     path('select/', views.SelectCourse.as_view()),
     path('selectcourses/', views.ShowCourse.as_view()),
@@ -12,4 +13,6 @@ urlpatterns = [
             views.TeaCourses.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
     path('files/', views.Files.as_view()),
     path('build/', views.Build.as_view()),
+    path('commit/', views.CommitContainer.as_view()),
+    path('update/', views.UpdateContainer.as_view()),
 ]

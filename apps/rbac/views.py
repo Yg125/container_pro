@@ -19,6 +19,7 @@ from apps.utils.my_pagination import MyPageNumberPagination
 from rest_framework import filters
 
 
+# 获取用户身份，通过发送过来的user的id获得对应的身份并添加到user_info中
 class UserInfoView(APIView):
     def get(self, request):
         user_info = User.objects.filter(id=request.user.id).values()[0]
@@ -99,13 +100,14 @@ class UserMonthIncrement(APIView):
 
 # 获取用户信息
 class UserView(ModelViewSet):
-    pagination_class = MyPageNumberPagination
+    pagination_class = MyPageNumberPagination # 使用自定义的分页
     # queryset = User.objects.filter(role__name='stu')
     serializer_class = UserSerializer
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter]  # 可按照username和工号搜索
     search_fields = ['username', 'work_id']
     authentication_classes = []
     permission_classes = []
+
     # 重写get_queryset方法,提供数据
     def get_queryset(self):
 
@@ -122,6 +124,7 @@ class UserView(ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        # 获取序列化数据中的username和password
         username = serializer.validated_data['username']
         password = serializer.validated_data['password']
         serializer.validated_data['mpass'] = password
@@ -171,6 +174,7 @@ class UserView(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         courses = instance.courses.all()
+        # 删除用户的时候要将用户选择课程的人数减一
         for course in courses:
             course.number = course.number - 1
             course.save()
