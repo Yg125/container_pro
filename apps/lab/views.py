@@ -2,7 +2,7 @@ from collections import OrderedDict
 from rest_framework import filters
 import docker
 from django.shortcuts import render
-
+import os
 # Create your views here.
 from rest_framework import status
 
@@ -12,9 +12,10 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from apps.lab import serializer
-from apps.lab.models import Courses, Image, Containerlist
+from apps.lab.models import Courses, Image, Containerlist, Service
 from apps.rbac.models import User
 from apps.utils.my_pagination import MyPageNumberPagination
+from apps.oper.utils.findContainer import findcontainer
 
 
 class CoursesView(ModelViewSet):
@@ -51,15 +52,13 @@ class ImagesView(ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['image_id', 'image_name']
 
-    def destroy(self, request, *args, **kwargs):  # 重写删除镜像，还需要删除掉docker系统中的镜像
+    def destroy(self, request, *args, **kwargs):  # 重写删除镜像
         instance = self.get_object()
         if len(instance.courses_set.all()) != 0:
             return Response({'error': '有课程使用该镜像，不能删除'})
         elif len(instance.containerlist_set.all()) != 0:
             return Response({'error': '有容器使用该镜像，不能删除'})
         else:
-            client = docker.from_env()
-            client.images.remove(image=instance.image_id)
             instance.delete()
             return Response({'error': ''}, status=status.HTTP_204_NO_CONTENT)
 
@@ -83,6 +82,27 @@ class ContainersView(ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class ServicesView(ModelViewSet):
+    pagination_class = MyPageNumberPagination
+    serializer_class = serializer.ServiceSerializers
+    queryset = Service.objects.all()
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', ]
+    # 单独写一个删除函数
+    def destroy(self, request, *args, **kwargs):  # 重写删除服务，还需要删除掉docker系统中的服务，并且删除数据库中对应的容器
+        instance = self.get_object()
+        service_name = instance.name
+        if instance.state == 'ShutDown':
+            os.popen('ssh Myserver94 docker service rm ' + service_name)
+        else:
+            container, ip_address = findcontainer(service_name)
+            os.popen('ssh Myserver94 docker service rm ' + service_name)  # 自动删除容器
+            instance_con = Containerlist.objects.get(container_id=container.id)
+            instance_con.delete()
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class TotalContainers(APIView):
     def get(self, request):
         username = request.user.username
@@ -93,6 +113,19 @@ class TotalContainers(APIView):
             user = User.objects.get(username=username)
             number = 0
             number += Containerlist.objects.filter(users=user).count()
+            return Response({"number": number})
+
+
+class TotalServices(APIView):
+    def get(self, request):
+        username = request.user.username
+        if username == 'admin':
+            number = Service.objects.all().count()
+            return Response({"number": number})
+        else:
+            user = User.objects.get(username=username)
+            number = 0
+            number += Service.objects.filter(users=user).count()
             return Response({"number": number})
 
 
@@ -112,6 +145,25 @@ class ShowContainers(ListAPIView):
         username = request.user.username
         user = User.objects.get(username=username)
         queryset = self.filter_queryset(Containerlist.objects.filter(users=user))
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class ShowServices(ListAPIView):
+    serializer_class = serializer.ServiceSerializers
+    pagination_class = MyPageNumberPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', ]
+
+    def list(self, request, *args, **kwargs):
+        username = request.user.username
+        user = User.objects.get(username=username)
+        queryset = self.filter_queryset(Service.objects.filter(users=user))
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

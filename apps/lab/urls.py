@@ -12,6 +12,11 @@ urlpatterns = [
     re_path(r'^containers/$', views.ContainersView.as_view({'get': 'list', "post": "create"})),
     re_path(r'^containers/(?P<pk>\d+)/$',
             views.ContainersView.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),  # 管理员查看某课程的容器内容
+    re_path(r'^services/$', views.ServicesView.as_view({'get': 'list', "post": "create"})),
+    re_path(r'^services/(?P<pk>\d+)/$',
+            views.ServicesView.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'})),
     re_path(r'^total/containers/$', views.TotalContainers.as_view()),
+    re_path(r'^total/services/$', views.TotalServices.as_view()),
     re_path(r'^show/containers/$', views.ShowContainers.as_view()),  # 学生/老师查看某课程的容器内容
+    re_path(r'^show/services/$', views.ShowServices.as_view())
 ]

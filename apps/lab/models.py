@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 from contain_pro.settings import AUTH_USER_MODEL
 
@@ -46,7 +45,7 @@ class Courses(models.Model):
 
 class Containerlist(models.Model):
     container_id = models.CharField(max_length=100, blank=True, null=True, verbose_name='容器id')
-    name = models.CharField(max_length=30, blank=True, null=True, verbose_name='容器名')
+    name = models.CharField(max_length=100, blank=True, null=True, verbose_name='容器名')
     run_time = models.DateTimeField(blank=True, null=True, verbose_name='开始运行时间')
     ip_address = models.CharField(max_length=20, blank=True, null=True, verbose_name='IP地址')
     port = models.BigIntegerField(blank=True, null=True, verbose_name='端口号')
@@ -60,3 +59,19 @@ class Containerlist(models.Model):
 
     class Meta:
         db_table = 'ContainerList'
+
+
+class Service(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True, verbose_name='服务名')
+    ip_address = models.CharField(max_length=20, blank=True, null=True, verbose_name='IP地址')
+    state = models.CharField(max_length=30, blank=True, null=True, verbose_name='状态')
+    port = models.BigIntegerField(blank=True, null=True, verbose_name='端口号')
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, verbose_name='使用镜像')
+    courses = models.ForeignKey(Courses, on_delete=models.SET_NULL, null=True)
+    users = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, verbose_name='用户')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        db_table = 'Service'

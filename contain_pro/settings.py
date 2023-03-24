@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-#&-i8u2r$_87-vsqyn8vj3@pfpuaydp_)lerxdyf3_@)aq6bdv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -148,6 +148,10 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:9528',
     'http://127.0.0.1:9529',
     'http://localhost:9529',
+    'http://10.250.89.149:9528',
+    'http://219.223.251.96:9528',
+    'http://219.223.251.96:9529',
+    'http://10.250.89.149:9529',
 )
 CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
 

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField
 
-from apps.lab.models import Courses, Image, Containerlist
+from apps.lab.models import Courses, Image, Containerlist, Service
 from apps.rbac.serializer import UserSerializer
 
 
@@ -62,6 +62,26 @@ class ContainerSerializers(serializers.ModelSerializer):
     class Meta:
         model = Containerlist
         fields = ['id', 'container_id', 'name', 'ip_address', 'port', 'status', 'image', 'courses', 'users']
+
+    extra_kwargs = {
+        "image": {
+            'read_only': True
+        },
+        "courses": {
+            'read_only': True
+        }
+
+    }
+
+
+class ServiceSerializers(serializers.ModelSerializer):
+    courses = CoursesSerializers()
+    image = ImageSerializers()
+    users = UserSerializer()
+
+    class Meta:
+        model = Service
+        fields = ['id', 'name', 'ip_address', 'state', 'port', 'image', 'courses', 'users']
 
     extra_kwargs = {
         "image": {
